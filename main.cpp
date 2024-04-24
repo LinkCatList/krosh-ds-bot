@@ -1,8 +1,13 @@
 #include "DPP/include/dpp/dpp.h"
+#include "cpp-dotenv/include/dotenv.h"
 
-const std::string BOT_TOKEN = std::getenv(".env");
+using namespace dotenv;
+
  
 int main() {
+    env.load_dotenv(".env");
+    const std::string BOT_TOKEN = env["BOT_TOKEN"];
+
     dpp::cluster bot(BOT_TOKEN);    
  
     bot.on_log(dpp::utility::cout_logger());
