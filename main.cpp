@@ -1,9 +1,9 @@
 #include "DPP/include/dpp/dpp.h"
 
-const std::string BOT_TOKEN = "";
+const std::string BOT_TOKEN = std::getenv(".env");
  
 int main() {
-    dpp::cluster bot(BOT_TOKEN);
+    dpp::cluster bot(BOT_TOKEN);    
  
     bot.on_log(dpp::utility::cout_logger());
  
