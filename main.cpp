@@ -1,11 +1,12 @@
 #include <dpp/dpp.h>
+#include "include/laserpants/dotenv/dotenv.h"
 
-
-const std::string BOT_TOKEN = "MTIzMzAwMDI0ODQ0ODkwOTMzMg.Gd7At-.2sRsa3RMi5GmlRx0Vi60caBH6op-4bINKINbE4";
 
 int main() {
+
+    dotenv::init();
+    const std::string BOT_TOKEN = std::getenv("BOT_TOKEN");
     dpp::cluster bot(BOT_TOKEN);
-    
     bot.on_log(dpp::utility::cout_logger());
  
     bot.on_slashcommand([](const dpp::slashcommand_t& event) {
