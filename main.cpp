@@ -13,7 +13,7 @@ int main() {
  
     bot.on_slashcommand([](const dpp::slashcommand_t& event) {
         if (event.command.get_command_name() == "ping") {
-            event.reply("Pong!");
+            event   .reply("Pong!");
         }
         if (event.command.get_command_name() == "start") {
             dpp::embed embed = dpp::embed()
@@ -31,6 +31,11 @@ int main() {
                 .set_timestamp(time(0));
             dpp::message msg(event.command.channel_id, embed);
             event.reply(msg);
+        }
+    });
+    bot.on_message_create([&bot](const dpp::message_create_t& event){
+        if(event.msg.content.find("да") != std::string::npos) {
+            event.reply("пизда", true);
         }
     });
     bot.on_ready([&bot](const dpp::ready_t& event) {
