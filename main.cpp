@@ -20,13 +20,13 @@ int main() {
                 .set_color(dpp::colors::red_fox)
                 .set_title("Krosh")
                 .set_url("https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR")
-                .set_author("Krosh", "https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR", "https://magicmag.net/image/cache/catalog/items9999-0000/9999-4046/bluetooth-kolonka-multozvuki-smesharik-krosh-1398x1398.jpg")
+                .set_author("Krosh", "https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR", "https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
                 .set_description("Dm me tomat")
-                .set_thumbnail("https://magicmag.net/image/cache/catalog/items9999-0000/9999-4046/bluetooth-kolonka-multozvuki-smesharik-krosh-1398x1398.jpg")
-                .set_image("https://magicmag.net/image/cache/catalog/items9999-0000/9999-4046/bluetooth-kolonka-multozvuki-smesharik-krosh-1398x1398.jpg")
+                .set_thumbnail("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
+                .set_image("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
                 .set_footer(
                     dpp::embed_footer()
-                    .set_icon("https://magicmag.net/image/cache/catalog/items9999-0000/9999-4046/bluetooth-kolonka-multozvuki-smesharik-krosh-1398x1398.jpg")
+                    .set_icon("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
                 )
                 .set_timestamp(time(0));
             dpp::message msg(event.command.channel_id, embed);
