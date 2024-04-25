@@ -2,12 +2,11 @@
 #include <dpp/dpp.h>
 #include "include/laserpants/dotenv/dotenv.h"
 
-
 int main() {
 
     dotenv::init();
     const std::string BOT_TOKEN = std::getenv("BOT_TOKEN");
-    dpp::cluster bot(BOT_TOKEN);
+    dpp::cluster bot(BOT_TOKEN, dpp::i_default_intents | dpp::i_message_content);
     
     bot.on_log(dpp::utility::cout_logger());
  
@@ -34,15 +33,18 @@ int main() {
         }
     });
     bot.on_message_create([&bot](const dpp::message_create_t& event){
-        if(event.msg.content.find("да") != std::string::npos) {
-            event.reply("пизда", true);
+        if (event.msg.content.find("да") != std::string::npos) {
+            event.reply("пиздa", true);
+        }
+        if (event.msg.content.find("нет") != std::string::npos) {
+            event.reply("пидора ответ", true);
         }
     });
     bot.on_ready([&bot](const dpp::ready_t& event) {
         if (dpp::run_once<struct register_bot_commands>()) {
             bot.global_command_create(dpp::slashcommand("ping", "Ping pong!", bot.me.id));
             bot.global_command_create(dpp::slashcommand("start", "hello!", bot.me.id));
-        }
+        }  
     });
  
     bot.start(dpp::st_wait);
