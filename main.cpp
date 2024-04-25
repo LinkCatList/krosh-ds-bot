@@ -20,13 +20,13 @@ int main() {
                 .set_color(dpp::colors::red_fox)
                 .set_title("Krosh")
                 .set_url("https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR")
-                .set_author("Krosh", "https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR", "https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
+                .set_author("Krosh", "https://youtu.be/dQw4w9WgXcQ?si=h7Fn3QO4zJN-1SSR", "https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png?raw=true")
                 .set_description("Dm me tomat")
-                .set_thumbnail("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
-                .set_image("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
+                .set_thumbnail("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png?raw=true")
+                .set_image("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png?raw=true")
                 .set_footer(
                     dpp::embed_footer()
-                    .set_icon("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png")
+                    .set_icon("https://github.com/LinkCatList/krosh-ds-bot/blob/main/img/latest.png?raw=true")
                 )
                 .set_timestamp(time(0));
             dpp::message msg(event.command.channel_id, embed);
