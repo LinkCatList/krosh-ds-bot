@@ -1,15 +1,20 @@
 #include <dpp/colors.h>
 #include <dpp/dispatcher.h>
 #include <dpp/dpp.h>
+#include <random>
 #include <regex>
+#include <locale>
 #include "include/laserpants/dotenv/dotenv.h"
 
+std::mt19937 rnd(100500);
 const std::vector<std::string> wordsYes = {"виндa", "проводa", "бородa"};
 const std::vector<std::string> wordsNo = {"солнышка ответ", "питониста аргумент"};
 
 int main() {
 
     dotenv::init();
+    std::locale loc("ru_RU.UTF-8");
+    
     const std::string BOT_TOKEN = std::getenv("BOT_TOKEN");
     dpp::cluster bot(BOT_TOKEN, dpp::i_default_intents | dpp::i_message_content);
     
@@ -39,13 +44,13 @@ int main() {
     });
     bot.on_message_create([&bot](const dpp::message_create_t& event){
         std::string message_ = event.msg.content;
-        std::regex regYes(".*да$");
+        std::regex regYes(".*[Дд]а[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regYes)) {
-            event.reply(wordsYes[rand() % 3], true);
+            event.reply(wordsYes[rnd() % 3], true);
         }
-        std::regex regNo(".*нет$");
+        std::regex regNo(".*[Нн]ет[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regNo)) {
-            event.reply(wordsNo[rand() % 2], true);
+            event.reply(wordsNo[rnd() % 2], true);
         }
     });
     bot.on_ready([&bot](const dpp::ready_t& event) {
