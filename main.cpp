@@ -13,7 +13,6 @@ const std::vector<std::string> wordsNo = {"солнышка ответ", "пит
 int main() {
 
     dotenv::init();
-    std::locale loc("ru_RU.UTF-8");
     
     const std::string BOT_TOKEN = std::getenv("BOT_TOKEN");
     dpp::cluster bot(BOT_TOKEN, dpp::i_default_intents | dpp::i_message_content);
@@ -44,11 +43,11 @@ int main() {
     });
     bot.on_message_create([&bot](const dpp::message_create_t& event){
         std::string message_ = event.msg.content;
-        std::regex regYes(".*[Дд]а[\\s!?.,;:-]*$", std::regex_constants::icase);
+        std::regex regYes("(Д|д)(А|а)[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regYes)) {
             event.reply(wordsYes[rnd() % 3], true);
         }
-        std::regex regNo(".*[Нн]ет[\\s!?.,;:-]*$", std::regex_constants::icase);
+        std::regex regNo("(Н|н)(Е|е)(Т|т)[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regNo)) {
             event.reply(wordsNo[rnd() % 2], true);
         }
