@@ -1,6 +1,11 @@
 #include <dpp/colors.h>
+#include <dpp/dispatcher.h>
 #include <dpp/dpp.h>
+#include <regex>
 #include "include/laserpants/dotenv/dotenv.h"
+
+const std::vector<std::string> wordsYes = {"виндa", "проводa", "бородa"};
+const std::vector<std::string> wordsNo = {"солнышка ответ", "питониста аргумент"};
 
 int main() {
 
@@ -33,11 +38,14 @@ int main() {
         }
     });
     bot.on_message_create([&bot](const dpp::message_create_t& event){
-        if (event.msg.content.find("да") != std::string::npos) {
-            event.reply("пиздa", true);
+        std::string message_ = event.msg.content;
+        std::regex regYes(".*да$");
+        if (std::regex_search(message_, regYes)) {
+            event.reply(wordsYes[rand() % 3], true);
         }
-        if (event.msg.content.find("нет") != std::string::npos) {
-            event.reply("пидора ответ", true);
+        std::regex regNo(".*нет$");
+        if (std::regex_search(message_, regNo)) {
+            event.reply(wordsNo[rand() % 2], true);
         }
     });
     bot.on_ready([&bot](const dpp::ready_t& event) {
