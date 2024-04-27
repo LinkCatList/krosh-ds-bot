@@ -1,2 +1,4 @@
 .env
 include
+build
+./src/main
