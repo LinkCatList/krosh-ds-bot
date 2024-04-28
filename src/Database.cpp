@@ -23,37 +23,6 @@ pqxx::connection & Database::getConnection() noexcept
     return *_connection;
 }
 
-void Database::initSchema()
-{
-    pqxx::work tr(getConnection());
-
-    tr.exec0(R"(
-        create table if not exists users2 (
-            user_id bigint primary key not null,
-            user_name text,
-            count_watermelons int not null default 0
-        )
-    )");
-
-    // tr.exec0(R"(
-    //     CREATE TABLE IF NOT EXISTS offenses (
-    //         offense_id SERIAL PRIMARY KEY NOT NULL,
-    //         user_id BIGINT NOT NULL,
-    //         offense_type VARCHAR(40) NOT NULL,
-    //         offense_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    //         offense_expires TIMESTAMP DEFAULT NULL NULL,
-    //         bypass TIMESTAMP DEFAULT NULL NULL
-    //     )
-    // )");
-
-    // tr.exec0(R"(
-    //     CREATE INDEX IF NOT EXISTS offenses_user_id_index
-    //         ON offenses (user_id)
-    // )");
-
-    tr.commit();
-}
-
 void Database::_checkRowsCount(size_t expectedRows, const pqxx::result & result)
 {
     if (size_t actualRows = result.size(); actualRows != expectedRows) {

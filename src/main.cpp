@@ -17,12 +17,13 @@ struct User {
     std::string user_name;
     int count_watermelons;
 };
-
+int64_t isoToTime (std::string &s) {
+    return ((s[11] - '0') * 10 + s[12] - '0') * 60 * 60 + ((s[14] - '0') * 10 + s[15] - '0') * 60 + (s[17] - '0') * 10 + s[18];
+}
 int main() {
     dotenv::init();
     const std::string URL = std::getenv("URL");
     Database db(URL);
-    db.initSchema();
     
     const std::string BOT_TOKEN = std::getenv("BOT_TOKEN");
     dpp::cluster bot(BOT_TOKEN, dpp::i_default_intents | dpp::i_message_content);
@@ -91,17 +92,34 @@ int main() {
             int god = rnd();
             bool success = (god % 2 == 0) || (god % 3 == 0);
             if (success) {
-                event.reply("<@" + std::to_string(name.usr.id) + "> успешно посадил один арбуз");
-                bool flag = db.queryValue<bool>("select exists(select 1 from users2 where user_id=$1)", std::to_string(name.usr.id));
+                bool flag = db.queryValue<bool>("select exists(select 1 from users where user_id=$1)", std::to_string(name.usr.id));
+                auto now = std::chrono::system_clock::now();
+                std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+                std::tm *ptm = std::localtime(&now_c);
+                char current_time[32];
+                std::strftime(current_time, 32, "%FT%T%z", ptm);
                 if (flag) {
-                    int count_watermelons = db.queryValue<int>("select count_watermelons from users2 where user_id=$1", std::to_string(name.usr.id));
-                    db.exec("update users2 set count_watermelons=$1 where user_id=$2", count_watermelons + 1, std::to_string(name.usr.id));
+                    auto last_grow = db.queryValue<std::string>("select last_grow from users where user_id=$1", std::to_string(name.usr.id));
+                    std::string current_timestr = "";
+                    for(int i = 0; i < 32; i++) {
+                        current_timestr.push_back(current_time[i]);
+                    }
+                    int64_t diff = abs(isoToTime(last_grow) - isoToTime(current_timestr));
+                    if (diff >= (int64_t)60 * (int64_t)60) {
+                        int count_watermelons = db.queryValue<int>("select count_watermelons from users where user_id=$1", std::to_string(name.usr.id));
+                        db.exec("update users set count_watermelons=$1, last_grow=$2 where user_id=$3", count_watermelons + 1, current_time, std::to_string(name.usr.id));
+                        event.reply("<@" + std::to_string(name.usr.id) + "> успешно посадил один арбуз");
+                    }
+                    else {
+                        event.reply("<@" + std::to_string(name.usr.id) + "> потерпи еще " + std::to_string(60 - diff / 60) + " минут до следующей посадки арбуза");
+                    }
                 }
                 else {
-                    db.exec("insert into users2 values($1, $2, $3)", std::to_string(name.usr.id), name.usr.username, 1);
+                    db.exec("insert into users values($1, $2, $3, $4)", std::to_string(name.usr.id), name.usr.username, 1, current_time);
                 }
             }
             else {
+                
                 event.reply("<@" + std::to_string(name.usr.id) + "> , твое семечко арбуза не проросло");
             }
         } 
@@ -110,12 +128,14 @@ int main() {
         } 
         else if (event.custom_id == "3") {
             std::vector<User> stat;
-            auto rows = db.query("select user_id, user_name, count_watermelons from users2 order by count_watermelons desc limit 10");
+            auto rows = db.query("select user_id, user_name, count_watermelons from users order by count_watermelons desc limit 10");
             for (const auto &row :rows) {
                 stat.push_back({row["user_id"].as<std::string>(), row["user_name"].as<std::string>() , row["count_watermelons"].as<int>()});
             }
 
-            dpp::embed embed = dpp::embed();
+            dpp::embed embed = dpp::embed()
+            .set_title("Статистка по арбузам!")
+            .set_color(dpp::colors::magenta_pink);
             for (auto [id, name, count] : stat) {
                 embed.add_field(name, std::to_string(count));
             }
