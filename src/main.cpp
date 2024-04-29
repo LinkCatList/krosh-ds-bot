@@ -1,3 +1,4 @@
+#include <cctype>
 #include <dpp/colors.h>
 #include <dpp/dispatcher.h>
 #include <dpp/message.h>
@@ -5,6 +6,7 @@
 #include <dpp/dpp.h>
 #include <random>
 #include <regex>
+#include <chrono>
 #include "Database.h"
 #include "../include/laserpants/dotenv/dotenv.h"
 
@@ -17,9 +19,26 @@ struct User {
     std::string user_name;
     int count_watermelons;
 };
+
+struct Post {
+    std::string user_id;
+    std::string msg_id;
+    bool is_active;
+};
+
 int64_t isoToTime (std::string &s) {
-    return ((s[11] - '0') * 10 + s[12] - '0') * 60 * 60 + ((s[14] - '0') * 10 + s[15] - '0') * 60 + (s[17] - '0') * 10 + s[18];
+    return ((s[11] - '0') * 10 + s[12] - '0') * 60 * 60 + ((s[14] - '0') * 10 + s[15] - '0') * 60 + (s[17] - '0') * 10 + s[18] - '0';
 }
+
+bool is_id (std::string &name) {
+    for (const auto &c : name) {
+        if (isalpha(c)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main() {
     dotenv::init();
     const std::string URL = std::getenv("URL");
@@ -115,16 +134,44 @@ int main() {
                     }
                 }
                 else {
-                    db.exec("insert into users values($1, $2, $3, $4)", std::to_string(name.usr.id), name.usr.username, 1, current_time);
+                    db.exec("insert into users values($1, $2, $3, $4)", std::to_string(name.usr.id), std::string(name.usr.username), "1", std::string(current_time));
+                    event.reply("<@" + std::to_string(name.usr.id) + "> успешно посадил один арбуз");
                 }
             }
             else {
-                
-                event.reply("<@" + std::to_string(name.usr.id) + "> , твое семечко арбуза не проросло");
+                bool flag = db.queryValue<bool>("select exists(select 1 from users where user_id=$1)", std::to_string(name.usr.id));
+                if (!flag) {
+                    event.reply("<@" + std::to_string(name.usr.id) + "> , твое семечко арбуза не проросло");
+                    return;
+                }
+                auto now = std::chrono::system_clock::now();
+                std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+                std::tm *ptm = std::localtime(&now_c);
+                char current_time[32];
+                std::strftime(current_time, 32, "%FT%T%z", ptm);
+                auto last_grow = db.queryValue<std::string>("select last_grow from users where user_id=$1", std::to_string(name.usr.id));
+                std::string current_timestr = "";
+                for(int i = 0; i < 32; i++) {
+                    current_timestr.push_back(current_time[i]);
+                }
+                int64_t diff = abs(isoToTime(last_grow) - isoToTime(current_timestr));
+                if (diff >= (int64_t)60 * (int64_t)60) {
+                    event.reply("<@" + std::to_string(name.usr.id) + "> , твое семечко арбуза не проросло");
+                }
+                else {
+                    event.reply("<@" + std::to_string(name.usr.id) + "> потерпи еще " + std::to_string(60 - diff / 60) + " минут до следующей посадки арбуза");
+                }
             }
         } 
         else if (event.custom_id == "2") {
             event.reply("Отправь никнейм получателя");
+            bool exists = db.queryValue<bool>("select exists(select 1 from post where user_id=$1)", std::to_string(name.usr.id));
+            if (!exists) {
+                db.exec("insert into post values($1, true)", std::to_string(name.usr.id));
+            }
+            else {
+                db.exec("update post set is_active=true where user_id=$1", std::to_string(name.usr.id));
+            }
         } 
         else if (event.custom_id == "3") {
             std::vector<User> stat;
@@ -143,17 +190,57 @@ int main() {
             event.reply(msg);
         }
     });
-    bot.on_message_create([&bot](const dpp::message_create_t& event){
+
+    bot.on_message_create([&bot, &db](const dpp::message_create_t& event){
         std::string message_ = event.msg.content;
         std::regex regYes("(Д|д)(А|а)[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regYes)) {
             event.reply(wordsYes[rnd() % 3], true);
         }
+
         std::regex regNo("(Н|н)(Е|е)(Т|т)[\\s!?.,;:-]*$", std::regex_constants::icase);
         if (std::regex_search(message_, regNo)) {
             event.reply(wordsNo[rnd() % 3], true);
         }
+
+        std::string author_id = std::to_string(event.msg.author.id);
+        bool exists = db.queryValue<bool>("select exists(select 1 from post where user_id=$1)", author_id);
+        if (exists) {
+            bool flag = db.queryValue<bool>("select is_active from post where user_id=$1", author_id);
+            if (flag) {
+                std::string user_ping_id = message_.substr(2, 18);
+                std::cout << user_ping_id << "\n";
+                if (!is_id(user_ping_id)) {
+                    event.reply("такого пользователя не существует");
+                    db.exec("update post set is_active=false where user_id=$1", author_id);
+                    return;
+                }
+                bool exists_id = db.queryValue<bool>("select exists(select 1 from users where user_id=$1)", user_ping_id);
+                if (!exists_id) {
+                    event.reply("такого пользователя не существует");
+                }
+                else {
+                    auto row1 = db.queryRow("select count_watermelons from users where user_id=$1", author_id);
+                    int64_t author_cnt_watermelons  = row1["count_watermelons"].as<int64_t>();
+
+                    if (author_cnt_watermelons < 1) {
+                        event.reply("у тебя недостаточно арбузов");
+                    } 
+                    else {
+                        auto row2 = db.queryRow("select user_name, count_watermelons from users where user_id=$1", user_ping_id);
+                        std::string user_ping_name = row2["user_name"].as<std::string>();
+                        int64_t user_cnt_watermelons = row2["count_watermelons"].as<int64_t>();
+                        db.exec("update users set count_watermelons=$1 where user_id=$2", user_cnt_watermelons + 1, user_ping_id);
+                        db.exec("update users set count_watermelons=$1 where user_id=$2", author_cnt_watermelons - 1, author_id);
+                        event.reply("пользователь <@" + user_ping_id + "> успешно получил 1 арбуз");
+                    }
+                }
+                db.exec("update post set is_active=false where user_id=$1", author_id);
+            }
+        }
+
     });
+
     bot.on_ready([&bot](const dpp::ready_t& event) {
         if (dpp::run_once<struct register_bot_commands>()) {
             bot.global_command_create(dpp::slashcommand("ping", "Ping pong!", bot.me.id));
