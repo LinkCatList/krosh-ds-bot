@@ -209,7 +209,11 @@ int main() {
             bool flag = db.queryValue<bool>("select is_active from post where user_id=$1", author_id);
             if (flag) {
                 std::string user_ping_id = message_.substr(2, 18);
-                std::cout << user_ping_id << "\n";
+                if (author_id == user_ping_id) {
+                    db.exec("update post set is_active=false where user_id=$1", author_id);
+                    event.reply("пользователь <@" + user_ping_id + "> успешно получил 1 арбуз");
+                    return;
+                }
                 if (!is_id(user_ping_id)) {
                     event.reply("такого пользователя не существует");
                     db.exec("update post set is_active=false where user_id=$1", author_id);
