@@ -2,3 +2,5 @@
 include
 build
 ./src/main
+cmake-build-debug
+.idea
