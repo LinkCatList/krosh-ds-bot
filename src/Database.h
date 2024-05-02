@@ -24,9 +24,6 @@ public:
 
     [[nodiscard]] pqxx::connection & getConnection() noexcept;
 
-    // Initialize database schema, e.g. create tables and indices.
-    void initSchema();
-
     // Generic query.
     template <typename... Args>
     [[nodiscard]] pqxx::result query(pqxx::zview sql, Args &&... args);
