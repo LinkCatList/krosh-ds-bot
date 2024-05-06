@@ -74,7 +74,7 @@ int main() {
             event.reply(msg);
         }
         if (event.command.get_command_name() == "farm") {
-            bool exists = db.queryValue<bool>("select exists(select 1 from watermelons_count where user_id=$1)", std::to_string(event.command.usr.id));
+            bool exists = db.queryValue<bool>("select exists(select 1 from users where user_id=$1)", std::to_string(event.command.usr.id));
             if (!exists) {
                 db.exec("insert into users (user_id, user_name, last_grow, rank, cash) values ($1, $2, 0, 0, 100)", std::to_string(event.command.usr.id), 
                 event.command.usr.global_name);
@@ -84,21 +84,11 @@ int main() {
             msg.add_component(
                 dpp::component().add_component(
                     dpp::component()
-                        .set_label("Посадить арбуз")
-                        .set_type(dpp::cot_button)
-                        .set_emoji(dpp::unicode_emoji::watermelon)
-                        .set_style(dpp::cos_primary)
-                        .set_id("1")
-                )
-            );
-            msg.add_component(
-                dpp::component().add_component(
-                    dpp::component()
-                        .set_label("Подарить арбуз")
-                        .set_type(dpp::cot_button)
-                        .set_emoji(dpp::unicode_emoji::watermelon)
-                        .set_style(dpp::cos_primary)
-                        .set_id("2")
+                    .set_label("Огород")
+                    .set_type(dpp::cot_button)
+                    .set_emoji(dpp::unicode_emoji::cucumber)
+                    .set_style(dpp::cos_primary)
+                    .set_id("9")
                 )
             );
             msg.add_component(
@@ -119,6 +109,16 @@ int main() {
                     .set_emoji(dpp::unicode_emoji::toolbox)
                     .set_style(dpp::cos_primary)
                     .set_id("4")
+                )
+            );
+            msg.add_component(
+                dpp::component().add_component(
+                    dpp::component()
+                    .set_label("Рынок")
+                    .set_type(dpp::cot_button)
+                    .set_emoji(dpp::unicode_emoji::chart)
+                    .set_style(dpp::cos_primary)
+                    .set_id("11")
                 )
             );
             msg.add_component(
@@ -227,16 +227,22 @@ int main() {
             auto rows = db.query("select watermelons.name, watermelons_count.watermelon_count"
                 " from watermelons join watermelons_count on watermelons.id = watermelons_count.watermelon_id where user_id=$1",
                 std::to_string(name.usr.id));
-
+            int64_t user_cash = db.queryValue<int64_t>("select cash from users where user_id=$1", std::to_string(name.usr.id));
             dpp::embed embed = dpp::embed()
-                .set_title("Твой инвентарь")
+                .set_title("Инвентарь `" + name.usr.global_name + "`")
                 .set_color(dpp::colors::magenta_pink);
-
+            embed.add_field("🪙", std::to_string(user_cash));
             for (const auto &row : rows){
                 embed.add_field(row["name"].as<std::string>(),
                     row["watermelon_count"].as<std::string>());
             }
-
+            rows = db.query("select manure.name, manures_count.manure_count "
+                "from manure join manures_count on manure.id=manures_count.manure_id where user_id=$1",
+                std::to_string(name.usr.id));
+            for (const auto &row : rows){
+                embed.add_field(row["name"].as<std::string>(),
+                    row["manure_count"].as<std::string>());
+            }
             dpp::message msg(event.command.channel_id, embed);
             event.reply(msg);
         }
@@ -317,14 +323,13 @@ int main() {
                     }
                 }
                 else {
-                    db.exec("insert into users values($1, $2, $3, $4)", std::to_string(name.usr.id), std::string(name.usr.username), "1", current_time);
-                    event.reply("<@" + std::to_string(name.usr.id) + "> успешно посадил один арбуз");
+                    event.reply("<@" + std::to_string(name.usr.id) + ">, прежде, чем сажать арбузы, вызови `/farm`");
                 }
             }
             else {
                 bool flag = db.queryValue<bool>("select exists(select 1 from users where user_id=$1)", std::to_string(name.usr.id));
                 if (!flag) {
-                    event.reply("<@" + std::to_string(name.usr.id) + "> , твое семечко арбуза не проросло");
+                    event.reply("<@" + std::to_string(name.usr.id) + ">, прежде, чем сажать арбузы, вызови `/farm`");
                     return;
                 }
                 auto current_time = time(NULL);
@@ -349,6 +354,101 @@ int main() {
             else {
                 db.exec("update post set is_active=true where user_id=$1", std::to_string(name.usr.id));
             }
+        }
+        else if (event.custom_id == "9") {
+            dpp::message msg(event.command.channel_id, "Выбери действие");
+            msg.add_component(
+                dpp::component().add_component(
+                    dpp::component()
+                        .set_label("Посадить арбуз")
+                        .set_type(dpp::cot_button)
+                        .set_emoji(dpp::unicode_emoji::watermelon)
+                        .set_style(dpp::cos_primary)
+                        .set_id("1")
+                )
+            );
+            msg.add_component(
+                dpp::component().add_component(
+                    dpp::component()
+                        .set_label("Подарить арбуз")
+                        .set_type(dpp::cot_button)
+                        .set_emoji(dpp::unicode_emoji::watermelon)
+                        .set_style(dpp::cos_primary)
+                        .set_id("2")
+                )
+            );
+            msg.add_component(
+                dpp::component().add_component(
+                    dpp::component()
+                        .set_label("Удобрить арбузы")
+                        .set_type(dpp::cot_button)
+                        .set_emoji(dpp::unicode_emoji::watermelon)
+                        .set_style(dpp::cos_primary)
+                        .set_id("10")
+                )
+            );
+            event.reply(msg);
+        }
+        else if (event.custom_id == "10") {
+            auto rows = db.query("select name, manure_count from manures_count join manure on "
+                "manures_count.manure_id=manure.id where user_id=$1", 
+                std::to_string(event.command.usr.id));
+            dpp::message msg(event.command.channel_id, "Доступные удобрения");
+            for (const auto &row : rows) {
+                if (row["manure_count"].as<int64_t>() > 0){
+                    msg.add_component(                                           
+                        dpp::component().add_component(
+                            dpp::component()
+                            .set_label(row["name"].as<std::string>())
+                            .set_type(dpp::cot_button)
+                            .set_emoji(dpp::unicode_emoji::potato)
+                            .set_style(dpp::cos_primary)
+                            .set_id("buff " + row["name"].as<std::string>())
+                        )
+                    );
+                }
+            }   
+            event.reply(msg);
+        }
+        else if (event.custom_id.substr(0, 4) == "buff") {
+            
+        }
+        else if (event.custom_id == "11") {
+            dpp::embed embed = dpp::embed()
+                .set_title("Рынок")
+                .set_description("В этом разделе можно продать предметы из своего инвентаря")
+                .set_color(dpp::colors::green_apple);
+            dpp::message msg(event.command.channel_id, embed);
+
+            auto rows = db.query("select watermelons.name, watermelon_count, watermelon_id "
+                "from watermelons_count join watermelons "
+                "on watermelons_count.watermelon_id=watermelons.id where user_id=$1 and watermelon_count > 0",
+                std::to_string(event.command.usr.id));
+            
+            auto comp = dpp::component()
+                .set_type(dpp::cot_selectmenu)
+                .set_placeholder("Выбери предмет")
+                .set_id("sell");
+
+            for (const auto &row : rows) {
+                comp.add_select_option(dpp::select_option(row["name"].as<std::string>(), 
+                    row["watermelon_id"].as<std::string>(),
+                    "Доступно: " + row["watermelon_count"].as<std::string>()));
+            }
+            rows = db.query("select manure.name, manure_count, manure_id from manures_count join manure " 
+                "on manures_count.manure_id=manure.id where user_id=$1 and manure_count > 0", std::to_string(event.command.usr.id));
+
+            for (const auto &row : rows) {
+                comp.add_select_option(dpp::select_option(row["name"].as<std::string>(), 
+                    "0" + row["manure_id"].as<std::string>(),
+                    "Доступно: " + row["manure_count"].as<std::string>()));
+            }
+
+            auto begemot = dpp::component().add_component(
+                comp
+            );
+            msg.add_component(begemot);
+            event.reply(msg);
         }
     });
 
@@ -420,7 +520,116 @@ int main() {
                 event.reply("Недостаточно кеша");
             }
             else {
+                bool exists = db.queryValue<bool>("select exists(select 1 from watermelons_count where "
+                    "user_id=$1 and watermelon_id=$2)", std::to_string(event.command.usr.id), watermelon_type);
+                std::string watermelon_name =  db.queryValue<std::string>("select name from watermelons where id=$1", watermelon_type);
+                if (exists) {
+                    int64_t watermelon_count = db.queryValue<int64_t>("select watermelon_count from watermelons_count where user_id=$1 and "
+                        "watermelon_id=$2", std::to_string(event.command.usr.id), watermelon_type);
+                    db.exec("update watermelons_count set watermelon_count=$1 where user_id=$2 and watermelon_id=$3",
+                        watermelon_count + 1, std::to_string(event.command.usr.id), watermelon_type);
+                    db.exec("update users set cash=$1 where user_id=$2", user_cash - watermelon_cost, std::to_string(event.command.usr.id));
+                    event.reply("Пользователь <@" + std::to_string(event.command.usr.id) + "> успешно приобрел 1 `" + watermelon_name + "`");   
+                }
+                else {
+                    db.exec("insert into watermelons_count (user_id, watermelon_id, watermelon_count) values($1, $2, 1)", 
+                        std::to_string(event.command.usr.id), watermelon_type);
+                    db.exec("update users set cash=$1 where user_id=$2", user_cash - watermelon_cost, std::to_string(event.command.usr.id));
+                    event.reply("Пользователь <@" + std::to_string(event.command.usr.id) + "> успешно приобрел 1 `" + watermelon_name + "`");   
+                }
+            }
+        }
+        else if (event.custom_id == "select_manure") {
+            std::string manure_type = event.values[0];
+            int64_t user_cash = db.queryValue<int64_t>("select cash from users where user_id=$1", std::to_string(event.command.usr.id));
+            int64_t manure_cost = db.queryValue<int64_t>("select cost from manure where id=$1", manure_type);
+            if (user_cash < manure_cost) {
+                event.reply("Недостаточно кеша");
+            }
+            else {
+                bool exists = db.queryValue<bool>("select exists(select 1 from manures_count where "
+                    "user_id=$1 and manure_id=$2)", std::to_string(event.command.usr.id), manure_type);
+                std::string manure_name =  db.queryValue<std::string>("select name from manure where id=$1", manure_type);
+                if (exists) {
+                    int64_t manure_count = db.queryValue<int64_t>("select manure_count from manures_count where user_id=$1 and "
+                        "manure_id=$2", std::to_string(event.command.usr.id), manure_type);
+                    db.exec("update manures_count set manure_count=$1 where user_id=$2 and manure_id=$3",
+                        manure_count + 1, std::to_string(event.command.usr.id), manure_type);
+                    db.exec("update users set cash=$1 where user_id=$2", user_cash - manure_cost, std::to_string(event.command.usr.id));
+                    event.reply("Пользователь <@" + std::to_string(event.command.usr.id) + "> успешно приобрел 1 `" + manure_name + "`");   
+                }
+                else {
+                    db.exec("insert into manures_count (user_id, manure_id, manure_count) values($1, $2, 1)", 
+                        std::to_string(event.command.usr.id), manure_type);
+                    db.exec("update users set cash=$1 where user_id=$2", user_cash - manure_cost, std::to_string(event.command.usr.id));
+                    event.reply("Пользователь <@" + std::to_string(event.command.usr.id) + "> успешно приобрел 1 `" + manure_name + "`");   
+                }
+            }
+        }
+        else if (event.custom_id == "sell") {
+            std::string item = event.values[0];
+            if (item[0] == '0') {
+                item = item.substr(1);
+                bool exists = db.queryValue<bool>("select exists(select 1 from manures_count where user_id=$1 and manure_id=$2)",
+                    std::to_string(event.command.usr.id), item);
+                if (exists) {
+                    auto row = db.queryRow("select cost, name from manure where id=$1", item);
+                    int64_t stonks = row["cost"].as<int64_t>();
+                    std::string manure_name = row["name"].as<std::string>();
+                    stonks -= stonks * 10 / 100;
+                    row = db.queryRow("select cash, manures_count.manure_count from users join manures_count "
+                        "on users.user_id=manures_count.user_id where users.user_id=$1 and manures_count.manure_id=$2", 
+                        std::to_string(event.command.usr.id), item);
+                    int64_t cur_cash = row["cash"].as<int64_t>();
+                    int64_t cur_manure_cnt = row["manure_count"].as<int64_t>();
 
+                    if (cur_manure_cnt == 0) {
+                        event.reply("У вас недостаточно этого предмета для продажи");
+                        return;
+                    }
+
+                    db.exec("update manures_count set manure_count=$1 where user_id=$2 and manure_id=$3", 
+                        cur_manure_cnt - 1, std::to_string(event.command.usr.id), item);
+                    db.exec("update users set cash=$1 where user_id=$2",
+                        cur_cash + stonks, std::to_string(event.command.usr.id));
+
+                    event.reply("`" + event.command.usr.global_name + "` успешно продал 1 `" + manure_name + 
+                        "` за `" + std::to_string(stonks) + "🪙`");
+                }
+                else {
+                    event.reply("я твою титьку царапал, не лезь, куда не просят");
+                }
+            }
+            else {
+                bool exists = db.queryValue<bool>("select exists(select 1 from watermelons_count where user_id=$1 and watermelon_id=$2)",
+                std::to_string(event.command.usr.id), item);
+                if (exists) {
+                    auto row = db.queryRow("select cost, name from watermelons where id=$1", item);
+                    int64_t stonks = row["cost"].as<int64_t>();
+                    std::string watermelon_name = row["name"].as<std::string>();
+                    stonks -= stonks * 10 / 100;
+                    row = db.queryRow("select cash, watermelons_count.watermelon_count from users join watermelons_count "
+                        "on users.user_id=watermelons_count.user_id where users.user_id=$1 and watermelons_count.watermelon_id=$2", 
+                        std::to_string(event.command.usr.id), item);
+                    int64_t cur_cash = row["cash"].as<int64_t>();
+                    int64_t cur_watermelon_cnt = row["watermelon_count"].as<int64_t>();
+
+                    if (cur_watermelon_cnt == 0) {
+                        event.reply("У вас недостаточно этого предмета для продажи");
+                        return;
+                    }
+
+                    db.exec("update watermelons_count set watermelon_count=$1 where user_id=$2 and watermelon_id=$3", 
+                        cur_watermelon_cnt - 1, std::to_string(event.command.usr.id), item);
+                    db.exec("update users set cash=$1 where user_id=$2",
+                        cur_cash + stonks, std::to_string(event.command.usr.id));
+
+                    event.reply("`" + event.command.usr.global_name + "` успешно продал 1 `" + watermelon_name + 
+                        "` за `" + std::to_string(stonks) + "🪙`");
+                }
+                else {
+                    event.reply("я твою титьку царапал, не лезь, куда не просят");
+                }
             }
         }
     }); 

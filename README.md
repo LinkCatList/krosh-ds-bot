@@ -1,7 +1,7 @@
 <img src="img/image.png" width="40%" align="right">
 
 ## Description 🍉
-discord bot that implements a watermelon farm and replies to some trigger message prefixes
+discord bot, which allows you to grow, sell, and exchange watermelons, also responds to some trigger phrases
 
 ## Install packages 🍉
 ```

@@ -3,7 +3,8 @@ create table if not exists users (
     user_name text,
     last_grow bigint,
     rank bigint,
-    cash bigint 
+    cash bigint,
+    buff bigint
 );
 
 create table if not exists watermelons (
@@ -26,6 +27,14 @@ create table if not exists watermelons_count (
     watermelon_count bigint not null,
     foreign key (user_id) references users(user_id),
     foreign key (watermelon_id) references watermelons(id)
+);
+
+create table if not exists manures_count (
+    user_id bigint not null,
+    manure_id bigint not null,
+    manure_count bigint not null,
+    foreign key (user_id) references users(user_id),
+    foreign key (manure_id) references manure(id)
 );
 
 create table if not exists post (
