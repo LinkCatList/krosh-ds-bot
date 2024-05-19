@@ -42,3 +42,4 @@ create table if not exists post (
     is_active boolean,
     watermelon_type text
 );
+

@@ -8,11 +8,11 @@
 #include <random>
 #include <regex>
 #include <chrono>
+#include "Demotivator.h"
 #include <string>
 #include "Database.h"
 #include "../include/laserpants/dotenv/dotenv.h"
 
-std::mt19937 rnd(100500);
 const std::vector<std::string> wordsYes = {"виндa", "проводa", "бородa"};
 const std::vector<std::string> wordsNo = {"солнышка ответ", "питониста аргумент", "насри в пакет"};
 
@@ -131,6 +131,10 @@ int main() {
                     .set_id("5")
                 )
             );
+            event.reply(msg);
+        }
+        if (event.command.get_command_name() == "degenerate") {
+            dpp::message msg(dpp::message(event.command.channel_id, createDemotivator()));
             event.reply(msg);
         }
     });
@@ -509,6 +513,12 @@ int main() {
             }
         }
 
+        if (!event.msg.attachments.empty()) {
+            for (const auto& attachment : event.msg.attachments) {
+                std::string image_url = attachment.url;
+                bot.message_create(dpp::message(event.msg.channel_id, image_url));
+            }
+        }
     });
 
     bot.on_select_click([&bot, &db](const dpp::select_click_t & event) {
@@ -639,6 +649,7 @@ int main() {
             bot.global_command_create(dpp::slashcommand("ping", "Ping pong!", bot.me.id));
             bot.global_command_create(dpp::slashcommand("start", "hello!", bot.me.id));
             bot.global_command_create(dpp::slashcommand("farm", "open your farm", bot.me.id));
+            bot.global_command_create(dpp::slashcommand("degenerate", "create a funny meme", bot.me.id));
         }  
     });
  
