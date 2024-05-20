@@ -43,3 +43,7 @@ create table if not exists post (
     watermelon_type text
 );
 
+create table if not exists pic (
+    id serial primary key not null,
+    link text
+);

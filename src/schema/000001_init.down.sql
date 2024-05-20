@@ -10,6 +10,6 @@ drop table if exists users;
 
 drop table if exists post;
 
-
+drop table if exists pic;
 
 -- update schema_migrations set version='000001', dirty=false;

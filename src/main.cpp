@@ -8,7 +8,6 @@
 #include <random>
 #include <regex>
 #include <chrono>
-#include "Demotivator.h"
 #include <string>
 #include "Database.h"
 #include "../include/laserpants/dotenv/dotenv.h"
@@ -134,7 +133,10 @@ int main() {
             event.reply(msg);
         }
         if (event.command.get_command_name() == "degenerate") {
-            dpp::message msg(dpp::message(event.command.channel_id, createDemotivator()));
+            int64_t len = db.queryValue<int64_t>("select count(*) from pic");
+            int64_t id = rnd() % len + 1;
+            std::string image_url = db.queryValue<std::string>("select link from pic where id=$1", std::to_string(id));
+            dpp::message msg(dpp::message(event.command.channel_id, image_url));
             event.reply(msg);
         }
     });
@@ -516,7 +518,7 @@ int main() {
         if (!event.msg.attachments.empty()) {
             for (const auto& attachment : event.msg.attachments) {
                 std::string image_url = attachment.url;
-                bot.message_create(dpp::message(event.msg.channel_id, image_url));
+                db.exec("insert into pic (link) values ($1)", image_url);
             }
         }
     });
