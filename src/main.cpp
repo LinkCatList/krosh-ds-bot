@@ -15,6 +15,7 @@
 const std::vector<std::string> wordsYes = {"виндa", "проводa", "бородa"};
 const std::vector<std::string> wordsNo = {"солнышка ответ", "питониста аргумент", "насри в пакет"};
 
+std::mt19937 rnd(100500);
 struct User {
     std::string user_id;
     std::string user_name;
@@ -134,8 +135,11 @@ int main() {
         }
         if (event.command.get_command_name() == "degenerate") {
             int64_t len = db.queryValue<int64_t>("select count(*) from pic");
+            // std::cout << len << "\n";
             int64_t id = rnd() % len + 1;
+            // std::cout << id << "\n";
             std::string image_url = db.queryValue<std::string>("select link from pic where id=$1", std::to_string(id));
+            // std::cout << image_url << "\n";
             dpp::message msg(dpp::message(event.command.channel_id, image_url));
             event.reply(msg);
         }
